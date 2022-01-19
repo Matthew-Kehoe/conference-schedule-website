@@ -1,0 +1,60 @@
+body {
+   font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif; 
+}
+
+header {
+    background-color: lavender;
+}
+
+footer {
+    background-color: dodgerblue;
+    padding: 12px;
+    
+    font-style: italic;
+    text-align: center;
+    color: black;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    border: 2px solid grey;
+    padding: 10px;
+}
+
+tr:nth-child(even) {background-color: lavender}
+
+tr:hover {background-color: lavender}
+
+th {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    text-align: center;
+    background-color: dodgerblue;
+    color: white;
+}
+
+h2 {
+    padding: 20px;
+    color: white;
+    font-style: italic;
+    text-align: center;
+    background-color: dodgerblue;
+    
+}
+
+h3 {
+    padding: 20px;
+    font-style: italic;
+    text-align: center;
+    background-color: powderblue;
+    
+}
+
+img {
+    width: 100%;
+}
+

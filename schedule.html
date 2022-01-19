@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Conference Schedule</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+    
+<header>
+    
+    <h2>2020 ACM Conference on Human Factors in Computing Systems (CHI’20)</h2><br>
+    <div class="computing_image">
+            <img src="images/deskshot_cropped.jpg" alt="Page header image">
+        </div>
+    <h3>Schedule information: </h3>
+    <p id="info">By default, if no timeslot for start and end is selected first and last slot of day respectively will be used</p>
+    
+    <div id=slot_selectors>
+    <p>Day:</p>
+    <select id="day-dropdown" name="day" onchange="updateStartTimes(this)"></select>
+    
+    <p>Slot start time:</p>
+    <select id="start-time-dropdown" name="day"></select>
+    
+    <p>Slot end time:</p>
+    <select id="end-time-dropdown" name="day"></select>
+    </div>
+    
+    <div id="radio_container">
+    <p>Session type:</p>
+        <input type="radio" id="all" name="session_type" value="all" checked>
+        <label for="all">All</label><br>
+        <input type="radio" id="paper_only" name="session_type" value="paper">
+        <label for="paper_only">Paper only</label><br>
+        <input type="radio" id="other_only" name="session_type" value="other">
+        <label for="other_only">Other only</label><br><br>
+    </div>
+    
+    
+    <button type="button" id="datetime_submission" onclick="dateTimeSubmission()">Submit</button>
+    
+    
+</header>
+    
+<section>
+    
+<h1 id="day_selected"></h1>
+    
+<div id="daily_info"></div>
+
+<div id="session_info"></div>
+
+<footer>Copyright MatCon Ltd 2020 ©</footer>
+    
+</section>
+
+    
+
+<script>
+
+
+// XMLHttpRequest used to parse information from scheduling json file
+var xmlhttp = new XMLHttpRequest();
+var url = "scheduling.json";
+    
+//externallyParsed object to be able to access everywhere    
+var externalParsed; 
+    
+xmlhttp.onreadystatechange = function() {
+    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+        
+        //Parse the JSON data to a JavaScript variable. 
+        var parsedObj = JSON.parse(xmlhttp.responseText); 
+        externalParsed = parsedObj;
+        // This function is defined below and deals with the JSON data read from the file. 
+        dailyInfo(parsedObj);
+    }
+};
+    
+xmlhttp.open("GET", url, true)
+xmlhttp.send()
+
+    
+    
+    
+    
+    
+    
+function dailyInfo(obj) {
+    
+//gets daily info from JSOn file and populates daily dropdown with daily information, creates start and end time dropdown too but only creates a single default option for each
+
+
+//defining workable name    
+var schedulingArray = obj;
+ 
+    
+// day_dropdown javascript -- > based off code descirbed here from https://www.codebyamir.com/blog/populate-a-select-dropdown-list-with-json
+    
+//setting dropdown lenght to 0        
+let day_dropdown = document.getElementById("day-dropdown");
+day_dropdown.length = 0;
+
+//creating a default option
+let day_dropdown_defaultOption = document.createElement("option");
+day_dropdown_defaultOption.text = "Select day";
+
+
+ //adding and setting selected index   
+day_dropdown.add(day_dropdown_defaultOption);
+day_dropdown.selectedIndex = 0;
+
+    
+//creating  all day options
+let option;
+for (var i = 0; i < schedulingArray.length; i++) {
+    option = document.createElement("option");
+    option.text = schedulingArray[i].day+" "+ schedulingArray[i].date.slice(8)+"th";
+    option.value = i;
+    day_dropdown.add(option);
+}
+
+    
+
+    
+    
+// Same process for start and end times, however will be updated when day is selected
+    
+let start_time_dropdown = document.getElementById("start-time-dropdown");
+start_time_dropdown.length = 0;
+    
+let start_time_dropdown_defaultOption = document.createElement("option");
+start_time_dropdown_defaultOption.text = "Select start time";
+start_time_dropdown_defaultOption.value = -1;
+    
+start_time_dropdown.add(start_time_dropdown_defaultOption);
+start_time_dropdown.selectedIndex = 0;
+     
+    
+let end_time_dropdown = document.getElementById("end-time-dropdown");
+end_time_dropdown.length = 0;
+    
+let end_time_dropdown_defaultOption = document.createElement("option");
+end_time_dropdown_defaultOption.text = "Select end time";
+end_time_dropdown_defaultOption.value = -1;
+    
+end_time_dropdown.add(end_time_dropdown_defaultOption);
+end_time_dropdown.selectedIndex = 0;
+    
+}
+    
+
+
+
+function updateStartTimes(selectObject) {
+    //triggers when day is selected in drop down and updates start and end time dropdowns to relevant timeslots
+    
+    //defining day and time object to be able to access correct times for respective days days
+    var daysAndTimes = {};
+    
+    for (i=0; i< externalParsed.length; i++) {
+        
+        //creating an empty array associated with each day
+        daysAndTimes[externalParsed[i].day+" "+ externalParsed[i].date.slice(8)+"th"] = []
+        
+        slots = externalParsed[i].slots;
+        
+        //populating the array with slot times
+        for (key in slots) {
+            
+            daysAndTimes[externalParsed[i].day+" "+ externalParsed[i].date.slice(8)+"th"].push(slots[key].time);
+        }
+    }
+    
+    //code here is based off example given on w3 here --> https://www.w3schools.com/jsref/tryit.asp?filename=tryjsref_select_options3
+    //getting date, start and end time values
+    var dayList = document.getElementById("day-dropdown");
+    var timeListStart = document.getElementById("start-time-dropdown");
+    var timeListEnd = document.getElementById("end-time-dropdown");
+    
+    //assigning selected day text to a variable to be able to reference key in daysAndTimes object
+    var selDay = dayList.options[dayList.selectedIndex].text;
+    
+    //removing standard select option to avoid errors associated with default option submission 
+    if (dayList.length === 7) {
+        dayList.remove(0)
+    }
+    
+    //assigning times associated with selected day value to variable
+    var times = daysAndTimes[selDay];
+    
+    //removing all options in start Time options
+    while (timeListStart.options.length) {
+        timeListStart.remove(0);
+    }
+    
+    // if times contains value
+    if (times) {
+        //adding a new default options
+        var default_start = new Option("Select start time", 0);
+            timeListStart.options.add(default_start);
+        var i;
+        
+        //populating options
+        for(i = 0; i < times.length; i++) {
+            var time = new Option(times[i].slice(0,5), i);
+            timeListStart.options.add(time);
+        }
+        
+        
+    }
+    
+    //removing all options in end Time options
+    
+    while (timeListEnd.options.length) {
+        timeListEnd.remove(0);
+    }
+    
+    // same as above section for start time loop (line 197)
+    if (times) {
+        var default_end = new Option("Select end time", times.length);
+            timeListEnd.options.add(default_end);
+        var i;
+        for(i = 0; i < times.length; i++) {
+            var time = new Option(times[i].slice(8), i);
+            timeListEnd.options.add(time);
+        }
+        
+        
+    }
+} 
+    
+function dateTimeSubmission() {
+    // triggers upon clicking of submission button, checks day, starttime and endtime values and populates a sessions echedule from there
+    
+    // getting all values from dropdowns
+    var d = document.getElementById("day-dropdown");
+    var day = d.options[d.selectedIndex].text;
+    var dayValue = d.options[d.selectedIndex].value;
+    
+    
+    var s = document.getElementById("start-time-dropdown");
+    var e = document.getElementById("end-time-dropdown");
+    
+    var startTimeValue  = s.options[s.selectedIndex].value;
+    var endTimeValue = e.options[e.selectedIndex].value;
+    
+    
+    var startTime = s.options[s.selectedIndex].text;
+    var endTime = e.options[e.selectedIndex].text;
+    
+    
+    // getting value from radio button    
+    var radio_value = radioChecker();
+    
+    
+    
+    //Error handling if user inputs start time before end time
+    
+    
+    if (endTimeValue < startTimeValue) {
+        alert("Start time must be before end time to obtain any results.");
+    } else {
+        console.log("Valid time acceptable");
+    }
+    
+    
+    //Error handling if user does not input day
+    if (day === "Select day") {
+        alert("Please select a day value");
+    } else {
+        console.log("Day value accepted");
+    }
+
+    
+    //selecting the slots associated with the chosen day
+    
+    selectedDay = externalParsed[dayValue].slots
+    
+    //opening table
+    var scheduleOut = "<table id=\"daily_info_table\">"
+    
+    //populating table header
+    scheduleOut += "<tr><th>Title of session</th><th>Start time</th><th>Location</th><th>Session type</th>"
+    
+    //initialing display variable, will only display sessions one display value is contained within startTime and endTime Value
+    var display = 0;
+    
+    //iterating through the keys in the slots object
+    for (key in selectedDay) {
+        if (display < startTimeValue || display > endTimeValue) {
+            //do nothing
+        } else if (selectedDay[key].sessions.length === 0) {
+            //do nothing
+        } else {
+            // iterating through the sessions in the slots object
+            for (i = 0; i < selectedDay[key].sessions.length; i++) {
+                
+                
+                
+                //populating variables 
+            
+                var sessionTitle = selectedDay[key].sessions[i].title;
+                
+                //slicing startTime for more readable format
+                var startTime = selectedDay[key].sessions[i].time.slice(0,5);
+                
+                var location = selectedDay[key].sessions[i].room;
+                
+                //formatting session type string to capitalize first letter for bette readability
+                var sessionType = selectedDay[key].sessions[i].type;
+                sessionType = sessionType[0,0].toUpperCase()+sessionType.slice(1);
+                
+                //assigning submissions to a submission variable
+                var submissions = selectedDay[key].sessions[i].submissions;
+                
+                var submissionTitle;
+                var submissionURL;
+                
+                //submission text, will be used to populate dropdown for submissions when title is clicked
+                var submissionText = "<p><u>Submissions: </u></p>";
+        
+                // using a for loop to populate submissions text with submissions
+                for (doubleinternalkey in submissions) {
+                    
+                    // handling case where no doiURL provided to ensure no text is output
+                    var doiURL = ' - doiURL: <a target="_blank" href="'+submissions[doubleinternalkey].doiUrl+'">'
+                    if (submissions[doubleinternalkey].doiUrl === "") {
+                        doiURL = ""
+                    }
+                    
+                    submissionText+= "<p>Title: "+submissions[doubleinternalkey].title + doiURL +submissions[doubleinternalkey].doiUrl+"</a></p>"
+                }
+                
+                // ensuring Submissions does not get printed for sessions with submissions
+                if (submissionText === "<p><u>Submissions: </u></p>") {
+                    submissionText = ""
+                }
+                
+                //if statement to handle which button is ticked, will only add rows relevant to button ticked
+                if (radio_value === "paper") {
+                    if (sessionType !== "Paper")
+                     {
+                         //do not print row
+                     } else {
+                         
+                         //populating table rows, using details, summary setup to create a dropdown to display submissions in a readable format
+                        scheduleOut += "<tr><td><details><summary>" +
+                        sessionTitle +
+                        "</summary>"+ submissionText+"</details</td><td>" +
+                        startTime +
+                        "</td><td>" +
+                        location +
+                        "</td><td>" +
+                        sessionType +
+                        "</td></tr>";  
+                     }
+                    
+                } else if (radio_value === "other") { 
+                    if (sessionType === "Paper") {
+                        //do not print row
+                    } else {
+                         //populating table rows, using details, summary setup to create a dropdown to display submissions in a readable format
+                        
+                        scheduleOut += "<tr><td><details><summary>" +
+                        sessionTitle +
+                        "</summary>"+ submissionText+"</details</td><td>" +
+                        startTime +
+                        "</td><td>" +
+                        location +
+                        "</td><td>" +
+                        sessionType +
+                        "</td></tr>"; 
+                    }
+                    
+                } else {
+                         //populating table rows, using details, summary setup to create a dropdown to display submissions in a readable format
+                    
+                        scheduleOut += "<tr><td><details><summary>" +
+                        sessionTitle +
+                        "</summary>"+ submissionText+"</details</td><td>" +
+                        startTime +
+                        "</td><td>" +
+                        location +
+                        "</td><td>" +
+                        sessionType +
+                        "</td></tr>";
+                } 
+            }
+        }
+        //incrementing display variable by one
+        display +=1   
+    }
+    
+    //closing table
+    scheduleOut +="</table>"
+    
+    //updating innerHTML to display selected day    
+    document.getElementById("day_selected").innerHTML="<h1>You have selected the conference information for "+ day+":</h1>"
+    
+    //updating schedule out with table created
+    document.getElementById("daily_info").innerHTML=scheduleOut; 
+      
+}
+    
+    
+    
+function radioChecker() {
+    
+    //used to get and return the value of the checked radio button
+    
+    
+    if (document.getElementById('all').checked) {
+        return document.getElementById('all').value
+    } else if (document.getElementById('paper_only').checked) {
+        return document.getElementById('paper_only').value
+    } else {
+        return document.getElementById('other_only').value
+    }
+}
+
+
+</script>
+
+</body>
+
+
+</html>
+
